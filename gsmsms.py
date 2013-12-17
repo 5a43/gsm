@@ -4,6 +4,7 @@ import threading
 import Queue
 import MySQLdb
 
+#for mysql operation
 class Database:
     host = 'localhost'
     user = 'root'
