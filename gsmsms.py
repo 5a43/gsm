@@ -79,6 +79,7 @@ def handle_message(**kargs):
                         is_sms_submit = False
                         is_sms_deliver = False
                         has_tpudhi = False
+                        has_tpvpf = False
                         is_mms = False
 
                         if (len(gsm_sms) > 10 and ord(gsm_sms[0:1]) & 0x0F == 0x09) and (ord(gsm_sms[1:2]) == 0x01) and (ord(gsm_sms[2:3]) > 0x10): # SMS Message
@@ -94,12 +95,12 @@ def handle_message(**kargs):
                                     to_number = covert_cellphone_num(to_number)
 
                                     # check if this is SMS-SUBMIT
-                                    sms_submit = struct.unpack('B', gsm_sms[8+to_number_len+2:8+to_number_len+2+1])[0]
+                                    sms_submit = struct.unpack('B', gsm_sms[7+to_number_len+2:7+to_number_len+2+1])[0]
                                     if sms_submit & 0x03 == 0x01:
                                         is_sms_submit = True
                                         # check if TP UD includes a extra header
                                         has_tpudhi = ((struct.unpack('B', gsm_sms[7+to_number_len+2:7+to_number_len+2+1])[0] & 0x40) == 0x40)
-
+                                        has_tpvpf = ((struct.unpack('B', gsm_sms[7+to_number_len+2:7+to_number_len+2+1])[0] >> 3 & 0x02) == 0x02)
                                         from_number_len = struct.unpack('B', gsm_sms[8+to_number_len+3:8+to_number_len+3+1])[0]
                                         from_number_len = (from_number_len / 2) + (from_number_len % 2)
                                         from_number = gsm_sms[8+to_number_len+3+2:8+to_number_len+3+2+from_number_len]
@@ -184,10 +185,16 @@ def handle_message(**kargs):
                                         if ((mms >> 2) & 0x03) == 0x01:
                                             is_mms = True
 
-                                        if header_len == 0:
-                                            sms = gsm_sms[8+to_number_len+3+2+from_number_len + 3:]
+                                        if has_tpvpf:
+                                            if header_len == 0:
+                                                sms = gsm_sms[8+to_number_len+3+2+from_number_len + 3 + 1:]
+                                            else:
+                                                sms = gsm_sms[8+to_number_len+3+2+from_number_len + 3 + header_len + 1 + 1:]
                                         else:
-                                            sms = gsm_sms[8+to_number_len+3+2+from_number_len + 3 + header_len + 1:]
+                                            if header_len == 0:
+                                                sms = gsm_sms[8+to_number_len+3+2+from_number_len + 3:]
+                                            else:
+                                                sms = gsm_sms[8+to_number_len+3+2+from_number_len + 3 + header_len + 1:]
                                         #print sms.encode('hex')
 
                                         # adjust string from big-endian to little-endian
