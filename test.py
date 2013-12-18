@@ -195,7 +195,7 @@ uplink = [
 if __name__ == '__main__':
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-    for p in sms:
+    for p in uplink:
         s.sendto(str(struct.pack("B" * len(p), *p)), ("127.0.0.1", 4729))
     
     s.close()
